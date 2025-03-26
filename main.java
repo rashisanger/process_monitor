@@ -286,16 +286,11 @@ public class ProcessMonitorDashboard {
     }
 
     private void startUpdates() {
-        updateTable(); // Initial update
-
-        // Timer for continuous updates
-        updateTimer = new Timer(1000, new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                updateCpuGraph();
-                if (System.currentTimeMillis() % 5000 == 0) { // Every 5 seconds
-                    updateTable();
-                }
+        updateTable();
+        updateTimer = new Timer(1000, e -> {
+            updateCpuGraph();
+            if (System.currentTimeMillis() % 5000 == 0) {
+                updateTable();
             }
         });
         updateTimer.start();
@@ -317,12 +312,19 @@ public class ProcessMonitorDashboard {
             g2d.drawString("CPU Usage Over Time (%)", getWidth() / 2 - 50, 20);
 
             // Axes
-            g2d.drawLine(50, 250, 650, 250); // X-axis
-            g2d.drawLine(50, 50, 50, 250);    // Y-axis
+            int leftMargin = 50, bottomMargin = 250, graphWidth = 850, graphHeight = 200;
+            g2d.drawLine(leftMargin, bottomMargin, leftMargin + graphWidth, bottomMargin);
+            g2d.drawLine(leftMargin, bottomMargin - graphHeight, leftMargin, bottomMargin);
 
             // Labels
-            g2d.drawString("0%", 30, 250);
-            g2d.drawString("100%", 25, 50);
+           g2d.setColor(Color.LIGHT_GRAY);
+            for (int i = 0; i <= 100; i += 20) {
+                int y = bottomMargin - (i * graphHeight / 100);
+                g2d.drawLine(leftMargin, y, leftMargin + graphWidth, y);
+                g2d.setColor(Color.BLACK);
+                g2d.drawString(i + "%", leftMargin - 30, y + 5);
+                g2d.setColor(Color.LIGHT_GRAY);
+            }
 
             // Draw CPU usage line
             if (cpuHistory.size() > 1) {
