@@ -329,15 +329,21 @@ public class ProcessMonitorDashboard {
             // Draw CPU usage line
             if (cpuHistory.size() > 1) {
                 g2d.setColor(Color.BLUE);
-                int xStep = (600 / (cpuHistory.size() - 1));
+                int xStep = graphWidth / (cpuHistory.size() - 1);
                 for (int i = 0; i < cpuHistory.size() - 1; i++) {
-                    int x1 = 50 + i * xStep;
-                    int y1 = 250 - (int) (cpuHistory.get(i) * 2); // Scale 0-100 to 0-200 pixels
-                    int x2 = 50 + (i + 1) * xStep;
-                    int y2 = 250 - (int) (cpuHistory.get(i + 1) * 2);
+                    int x1 = leftMargin + i * xStep;
+                    int y1 = bottomMargin - (int) (cpuHistory.get(i) * graphHeight / 100);
+                    int x2 = leftMargin + (i + 1) * xStep;
+                    int y2 = bottomMargin - (int) (cpuHistory.get(i + 1) * graphHeight / 100);
                     g2d.drawLine(x1, y1, x2, y2);
                 }
             }
+
+            // Legend
+            g2d.setColor(Color.BLUE);
+            g2d.fillRect(leftMargin + 10, 30, 10, 10);
+            g2d.setColor(Color.BLACK);
+            g2d.drawString("System CPU Usage", leftMargin + 25, 40);
         }
     }
 
@@ -348,17 +354,19 @@ public class ProcessMonitorDashboard {
         String state;
         double cpu;
         double memory;
+        int priority;
 
-        ProcessInfo(int pid, String name, String state, double cpu, double memory) {
+        ProcessInfo(int pid, String name, String state, double cpu, double memory, int priority) {
             this.pid = pid;
             this.name = name;
             this.state = state;
             this.cpu = cpu;
             this.memory = memory;
+            this.priority = priority;
         }
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> new ProcessMonitorDashboard());
+       SwingUtilities.invokeLater(ProcessMonitorDashboard::new);
     }
 }
