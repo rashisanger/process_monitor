@@ -53,15 +53,16 @@ public class ProcessMonitorDashboard {
                 if (parts.length >= (osName.contains("windows") ? 9 : 6)) {
                     try {
                         int pid = Integer.parseInt(parts[1].replace("\"", ""));
-                        String name = parts[0].replace("\"", "");
+                        String name = parts[0].replace("\"", "").toLowerCase().endsWith(".exe") 
+                            ? parts[0].replace("\"", "").substring(0, parts[0].length() - 6) : parts[0].replace("\"", "");
                         String state = osName.contains("windows") ? parts[7].replace("\"", "") : parts[2];
-                        double cpu = osName.contains("windows") ? 0.0 : Double.parseDouble(parts[3]); // Windows CPU% not directly available
-                        double memory = osName.contains("windows")
-                                ? Double.parseDouble(parts[4].replace("\"", "").replace(",", "").replace(" K", "")) / 1024.0
-                                : Double.parseDouble(parts[4]) * totalMemory / 100.0; // Convert % to MB for Unix
+                        double cpu = osName.contains("windows") ? estimateWindowsCpu(pid) : Double.parseDouble(parts[3]);
+                        double memory = osName.contains("windows") 
+                            ? Double.parseDouble(parts[4].replace("\"", "").replace(",", "").replace(" K", "")) / 1024.0 
+                            : Double.parseDouble(parts[4]) * totalMemory / 100.0;
                         int priority = osName.contains("windows") ? parseWindowsPriority(parts[8].replace("\"", "")) : Integer.parseInt(parts[5]);
                         processes.add(new ProcessInfo(pid, name, state, cpu, memory, priority));
-                    } catch (NumberFormatException ignored) {}
+                    } catch (Exception ignored) {}
                 }
             }
             reader.close();
@@ -70,6 +71,23 @@ public class ProcessMonitorDashboard {
             JOptionPane.showMessageDialog(frame, "Error fetching process data: " + e.getMessage(), "Error", JOptionPane.ERROR_MESSAGE);
         }
         return processes;
+    }
+
+    // Estimate CPU usage for Windows (basic approximation)
+    private double estimateWindowsCpu(int pid) {
+        try {
+            Process p = Runtime.getRuntime().exec("wmic path Win32_PerfFormattedData_PerfProc_Process get IDProcess,PercentProcessorTime");
+            BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (line.contains(String.valueOf(pid))) {
+                    String[] parts = line.trim().split("\\s+");
+                    if (parts.length >= 2) return Double.parseDouble(parts[1]);
+                }
+            }
+            reader.close();
+        } catch (Exception ignored) {}
+        return 0.0; // Fallback if WMIC fails
     }
 
     // Parse Windows priority levels
