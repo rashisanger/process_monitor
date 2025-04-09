@@ -154,8 +154,12 @@ public class ProcessMonitorDashboard {
 
         // Search Field
         searchField = new JTextField(20);
-        searchField.setToolTipText("Search by process name");
-        searchField.addActionListener(e -> filterTable());
+        searchField.setToolTipText("Search by process name (real-time)");
+        searchField.getDocument().addDocumentListener(new javax.swing.event.DocumentListener() {
+            public void insertUpdate(javax.swing.event.DocumentEvent e) { filterTable(); }
+            public void removeUpdate(javax.swing.event.DocumentEvent e) { filterTable(); }
+            public void changedUpdate(javax.swing.event.DocumentEvent e) { filterTable(); }
+        });
         JLabel searchLabel = new JLabel("Search: ");
         JPanel searchPanel = new JPanel();
         searchPanel.add(searchLabel);
@@ -165,9 +169,8 @@ public class ProcessMonitorDashboard {
         controlPanel.add(buttonPanel, BorderLayout.SOUTH);
         frame.add(controlPanel, BorderLayout.SOUTH);
 
-        // CPU Graph (Module 3: Visualization)
         graphPanel = new CustomGraphPanel();
-        graphPanel.setPreferredSize(new Dimension(700, 300));
+        graphPanel.setPreferredSize(new Dimension(950, 300));
         frame.add(graphPanel, BorderLayout.NORTH);
 
         frame.setVisible(true);
@@ -208,16 +211,15 @@ public class ProcessMonitorDashboard {
         for (ProcessInfo prev : previous) {
             if (prev.pid == current.pid) {
                 double diff = current.cpu - prev.cpu;
-                if (diff > 5) return "↑ High";
-                if (diff > 1) return "↑";
-                if (diff < -5) return "↓ High";
-                if (diff < -1) return "↓";
-                return "–";
+                if (diff > 10) return "↑↑ High";
+                if (diff > 2) return "↑";
+                if (diff < -10) return "↓↓ High";
+                if (diff < -2) return "↓";
+                return "≈";
             }
         }
-        return "N/A"; // New process
+        return "New";
     }
-
     private void terminateProcess() {
         int selectedRow = table.getSelectedRow();
         if (selectedRow >= 0) {
